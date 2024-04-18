@@ -81,16 +81,7 @@ class NineMensMorris():
     
     def utility(self, state, player):
         heuristics = Heuristics()
-        difficulty_map = {
-            'easy': heuristics.get_easy_heuristics,
-            'medium': heuristics.get_medium_heuristics,
-            'hard': heuristics.get_hard_heuristics
-        }
-
-        if self.difficulty in difficulty_map:
-            return difficulty_map[self.difficulty](state, player)
-        else:
-            raise Exception("Invalid Difficulty! Use 'easy', 'medium' or 'hard'.")
+        return heuristics.get_heuristic(state=state, player=player, difficulty=self.difficulty)
     
     # Returns True if the Game has reached a terminal State and is over
     def terminal_test(self, state):
