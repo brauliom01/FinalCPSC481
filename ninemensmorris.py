@@ -2,6 +2,7 @@ from gamestate import GameState
 from heuristics import Heuristics
 
 import random
+import copy
 
 class NineMensMorris():
     def __init__(self, difficulty='easy', ai=True):
@@ -52,6 +53,11 @@ class NineMensMorris():
             frozenset({'F2', 'F4', 'F6'}),
             frozenset({'G1', 'G4', 'G7'})
         }
+        self.depth_mapping = {
+            'easy': 2,
+            'medium': 4,
+            'hard': 6
+        }
 
     def actions(self, state):
         action_map = {
@@ -62,9 +68,10 @@ class NineMensMorris():
         }
 
         if state.move_type in action_map:
-            return action_map[state.move_type](state=state)
+            moves = action_map[state.move_type](state=state)
+            return moves    
         else:
-            raise Exception("Invalid Move Type! Use 'set', 'move', 'take' or 'jump'.")
+            raise Exception(f"Invalid Move Type! Use 'set', 'move', 'take' or 'jump'.")
 
     
     def result(self, state, move):
@@ -74,14 +81,18 @@ class NineMensMorris():
             'take': self.take_result,
             'jump': self.jump_result
         }
-
-        if state.move_type not in result_map: raise Exception("Invalid Move Type! Use 'set', 'move', 'take' or 'jump'.")
-        if move not in self.actions(state): raise Exception(f"Illegal Move! Use one of these Moves: {self.actions(state)}")
-        else: return result_map[state.move_type](state=state, move=move)
+        cloned_state = copy.deepcopy(state)
+        
+        if cloned_state.move_type not in result_map: raise Exception("Invalid Move Type! Use 'set', 'move', 'take' or 'jump'.")
+        if move not in self.actions(cloned_state): raise Exception(f"Move; {move} is Illegal for State:\n{state}\nUse one of these Moves: {self.actions(cloned_state)}")
+        else: return result_map[state.move_type](state=cloned_state, move=move)
     
-    def utility(self, state, player):
+    def evaluation(self, state, player):
         heuristics = Heuristics()
         return heuristics.get_heuristic(state=state, player=player, difficulty=self.difficulty)
+    
+    def utility(self, state, player):
+        return 1 if self.get_winner(state=state) == player else 0
     
     # Returns True if the Game has reached a terminal State and is over
     def terminal_test(self, state):
@@ -93,9 +104,56 @@ class NineMensMorris():
             if(piece == 'b'): black_pieces += 1
             elif(piece == 'w'): white_pieces += 1
         return black_pieces <= 2 or white_pieces <= 2
+
+    def max_value(self, state, alpha, beta, current_depth, player):
+        if self.terminal_test(state): return self.utility(state, player) 
+        if current_depth <= 0: return self.evaluation(state, player)
+        
+        v = float('-inf')
+        next_depth = current_depth - 1
+        moves = self.actions(state)
+        for action in moves:
+            next_state = self.result(state, action)
+            if(next_state.to_move == player): v = max(v, self.max_value(next_state, alpha, beta, next_depth, player))
+            else: v = max(v, self.min_value(next_state, alpha, beta, next_depth, player))
+            if v >= beta:
+                return v
+            alpha = max(alpha, v)
+        return v
+
+    def min_value(self, state, alpha, beta, current_depth, player):
+        if self.terminal_test(state): return self.utility(state, player)
+        if current_depth <= 0: return self.evaluation(state, player)
+
+        v = float('inf')
+        next_depth = current_depth - 1
+        moves = self.actions(state)
+        for action in moves:
+            next_state = self.result(state, action)
+            if(next_state.to_move == player): v = min(v, self.max_value(next_state, alpha, beta, next_depth, player))
+            else: v = min(v, self.min_value(next_state, alpha, beta, next_depth, player))
+            if v <= alpha:
+                return v
+            beta = min(beta, v)
+        return v
     
-    def get_best_move(self, state, player):
-        raise NotImplementedError
+    def get_best_move(self, state, player, depth=None):
+        if depth is None:
+            depth = self.depth_mapping[self.difficulty]
+
+        best_score = float('-inf')
+        best_action = None
+        for action in self.actions(state):
+            next_state = self.result(state, action)
+            if(next_state.to_move == player):
+                score = self.max_value(next_state, best_score, float('inf'), depth - 1, player)
+            else: 
+                score = self.min_value(next_state, best_score, float('inf'), depth - 1, player)
+            if score > best_score:
+                best_score = score
+                best_action = action
+
+        return best_action
     
     def get_winner(self, state):
         if not self.terminal_test(state): raise Exception("No Player has won yet. Continue the game")
