@@ -48,14 +48,10 @@ class Heuristics:
             'easy': {
             self.own_pieces_value,
             self.opponent_pieces_value,
-            self.own_open_mills_value,
-            self.opponent_open_mills_value
             },
             'medium': {
             self.own_pieces_value,
             self.opponent_pieces_value,
-            self.own_possible_moves_value,
-            self.opponent_possible_moves_value,
             self.own_mills_value,
             self.opponent_mills_value,
             },
