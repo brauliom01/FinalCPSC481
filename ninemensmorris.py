@@ -137,9 +137,9 @@ class NineMensMorris():
             beta = min(beta, v)
         return v
     
-    def get_best_move(self, state, player, depth=None):
-        if depth is None:
-            depth = self.depth_mapping[self.difficulty]
+    def get_best_move(self, state, player, depth=None, dynamic_depth=True):
+        if dynamic_depth: depth = self.get_dynamic_depth(state=state)
+        if not depth: raise Exception(f"Could not determine Search-Depth: Dynamic Depth was disabled and no Depth was given.")
 
         best_score = float('-inf')
         best_action = None
@@ -154,6 +154,14 @@ class NineMensMorris():
                 best_action = action
 
         return best_action
+    
+    def get_dynamic_depth(self, state):
+        if state.to_move == 'jump': return 3
+        pieces_on_board = 0
+        for value in state.board.values():
+            if value != 'e': pieces_on_board +=1
+        depth = int(pieces_on_board/3) + 1
+        return depth if depth >=3 else 3
     
     def get_winner(self, state):
         if not self.terminal_test(state): raise Exception("No Player has won yet. Continue the game")
