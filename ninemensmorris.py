@@ -161,7 +161,7 @@ class NineMensMorris():
         for value in state.board.values():
             if value != 'e': pieces_on_board +=1
         depth = int(pieces_on_board/3) + 1
-        return depth if depth >=3 else 3
+        return depth if depth >=3 else 4
     
     def get_winner(self, state):
         if not self.terminal_test(state): raise Exception("No Player has won yet. Continue the game")
