@@ -18,6 +18,10 @@ inner_square_size = 100
 node_radius = 10  # Radius for the nodes
 piece_radius = 20  # Radius for the game pieces
 
+menu_open = False
+menu_items = ["Resume", "Restart", "Difficulty: Easy", "Quit"]
+menu_item_selected = None
+
 # Initialize game logic
 game = NineMensMorris()
 current_state = game.initial
@@ -77,6 +81,11 @@ def draw_board():
     pygame.draw.line(screen, (0, 0, 0), nodes_positions['E4'], nodes_positions['F4'], 3)
     pygame.draw.line(screen, (0, 0, 0), nodes_positions['F4'], nodes_positions['G4'], 3)
 
+    font = pygame.font.Font(None, 36)  # You can adjust the font size here
+    title_text = font.render("Nine Men's Morris", True, (0, 0, 0))  # Render the title in black
+    title_rect = title_text.get_rect(center=(size[0] // 2, size[1] - 30))  # Position the text at the bottom of the screen
+    screen.blit(title_text, title_rect)
+    
 # Function to draw nodes
 def draw_nodes():
     for pos in nodes_positions.values():
@@ -100,7 +109,59 @@ def display_message(message):
     pygame.time.wait(3000)  # Display the message for 3 seconds
 
 
+def draw_counters():
+    # Assuming 9 pieces at the start for each player as per standard Nine Men's Morris rules
+    remaining_black = 9 - sum(1 for pos in current_state.board.values() if pos == 'b')
+    remaining_white = 9 - sum(1 for pos in current_state.board.values() if pos == 'w')
+    font = pygame.font.Font(None, 24)  # Adjust font size as needed
 
+    # Render black pieces counter
+    black_text = font.render(f"Black pieces left: {remaining_black}", True, (0, 0, 0))
+    black_rect = black_text.get_rect(topright=(size[0] - 10, 10))
+    screen.blit(black_text, black_rect)
+
+    # Render white pieces counter
+    white_text = font.render(f"White pieces left: {remaining_white}", True, (255, 255, 255))
+    white_rect = white_text.get_rect(topleft=(10, 10))
+    screen.blit(white_text, white_rect)
+
+def draw_settings_button():
+    button_rect = pygame.Rect(10, 10, 40, 40)
+    pygame.draw.rect(screen, (200, 200, 200), button_rect)
+    line_y_offsets = [15, 25, 35]
+    for offset in line_y_offsets:
+        pygame.draw.line(screen, (0, 0, 0), (15, 10 + offset), (35, 10 + offset), 3)
+    return button_rect
+
+def draw_dropdown():
+    if menu_open:
+        base_height = 55
+        for index, item in enumerate(menu_items):
+            item_rect = pygame.Rect(10, base_height + 30 * index, 140, 30)
+            pygame.draw.rect(screen, (200, 200, 200), item_rect)
+            font = pygame.font.Font(None, 24)
+            text = font.render(item, True, (0, 0, 0))
+            text_rect = text.get_rect(center=item_rect.center)
+            screen.blit(text, text_rect)
+
+def handle_menu_selection(index):
+    global menu_open, current_state
+    selection = menu_items[index]
+    if selection == "Resume":
+        menu_open = False
+    elif selection == "Restart":
+        current_state = game.initial
+        menu_open = False
+    elif "Difficulty" in selection:
+        if "Easy" in selection:
+            menu_items[index] = "Difficulty: Hard"
+        else:
+            menu_items[index] = "Difficulty: Easy"
+    elif selection == "Quit":
+        pygame.quit()
+        sys.exit()
+
+settings_button_rect = draw_settings_button()
 
 # Main game loop
 running = True
@@ -110,6 +171,15 @@ while running:
             running = False
         elif event.type == pygame.MOUSEBUTTONDOWN:
             pos = pygame.mouse.get_pos()
+            if settings_button_rect.collidepoint(pos):
+                menu_open = not menu_open
+            elif menu_open:  # Check if the click is within the menu area when the menu is open
+                base_height = 55
+                for index, item in enumerate(menu_items):
+                    item_rect = pygame.Rect(10, base_height + 30 * index, 140, 30)
+                    if item_rect.collidepoint(pos):  # Check if the click is on this menu item
+                        handle_menu_selection(index)
+                        break
 
             if current_state.move_type == 'jump':
                 if selected_piece:
@@ -165,6 +235,9 @@ while running:
                                 selected_piece = node_key
                                 print(f"Selected piece at {selected_piece} for moving")
                                 break
+        elif event.type == pygame.MOUSEBUTTONUP:
+            if menu_open:
+                draw_dropdown()
                                 
     # AI Move
     if current_state.to_move == 'w' and not game.terminal_test(current_state):
@@ -184,6 +257,9 @@ while running:
     draw_board()
     draw_nodes()
     draw_pieces()
+    draw_counters()
+    settings_button_rect = draw_settings_button()
+    draw_dropdown()
     pygame.display.flip()
 
 pygame.quit()
