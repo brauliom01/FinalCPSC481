@@ -173,13 +173,6 @@ while running:
             pos = pygame.mouse.get_pos()
             if settings_button_rect.collidepoint(pos):
                 menu_open = not menu_open
-            elif menu_open:  # Check if the click is within the menu area when the menu is open
-                base_height = 55
-                for index, item in enumerate(menu_items):
-                    item_rect = pygame.Rect(10, base_height + 30 * index, 140, 30)
-                    if item_rect.collidepoint(pos):  # Check if the click is on this menu item
-                        handle_menu_selection(index)
-                        break
 
             if current_state.move_type == 'jump':
                 if selected_piece:
