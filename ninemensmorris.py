@@ -275,27 +275,3 @@ class NineMensMorris():
             if(value == player): amount_pieces += 1
         return amount_pieces == 3
     
-
-if __name__ == '__main__':
-    nmm = NineMensMorris(difficulty='easy')
-    current_state = nmm.initial
-
-    while not nmm.terminal_test(current_state):
-        moves = nmm.actions(state=current_state)
-        print(current_state)
-        if current_state.to_move == 'b':
-            # Logic to ask User for one of the Moves
-            print("Available moves:", moves)
-            user_move = input("Please select a move from the list: ")
-            while user_move not in moves:
-                print("Invalid move. Please select a move from the list.")
-                user_move = input("Please select a move from the list: ")
-            move = user_move
-        else:
-            # Logic for a random selector to select one random move
-            move = random.choice(list(moves))
-            
-        current_state = nmm.result(state=current_state, move=move)
-        
-    winner = nmm.get_winner(state=current_state)
-    print(f'{winner} won the game!')
