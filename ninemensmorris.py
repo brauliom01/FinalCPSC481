@@ -220,17 +220,19 @@ class NineMensMorris():
     # Different Move_types take advantage of different Result Methods
 
     def set_result(self, state, move):
-        new_state = state
+        new_state = copy.deepcopy(state)
         new_state.board[move] = state.to_move
         if state.to_move == 'b': new_state.pieces_b -= 1
         else: new_state.pieces_w -= 1
 
-        if(self.piece_in_mill(board=new_state.board, piece=move) and self.can_take(board=new_state.board, player=state.to_move)):
+        if self.piece_in_mill(board=new_state.board, piece=move) and self.can_take(board=new_state.board, player=state.to_move):
             new_state.move_type = 'take'
-            return new_state
-        
-        new_state.to_move = 'b' if state.to_move == 'w' else 'w'
-        new_state.move_type = 'move' if (new_state.pieces_b + new_state.pieces_w) == 0 else 'set'
+        else:
+            new_state.to_move = 'b' if state.to_move == 'w' else 'w'
+            if (new_state.pieces_b + new_state.pieces_w) == 0:
+                new_state.move_type = 'move'
+            else:
+                new_state.move_type = 'set'
         return new_state
 
 
